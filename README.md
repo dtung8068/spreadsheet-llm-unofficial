@@ -1,2 +1,2 @@
 # SpreadsheetLLM
-Unofficial Implementation of Microsoft Paper
+ My Implementation of Microsoft's SpreadsheetLLM paper, found here: https://arxiv.org/pdf/2407.09025
