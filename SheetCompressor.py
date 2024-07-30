@@ -35,8 +35,17 @@ class SheetCompressor:
         format_array = []
 
         #Border
+        if xf.border.top_line_style:
+            format_array.append('Top Border')
+        
         if xf.border.bottom_line_style:
-            format_array.append('Bottom Border')    
+            format_array.append('Bottom Border') 
+
+        if xf.border.left_line_style:
+            format_array.append('Left Border')
+    
+        if xf.border.right_line_style:
+            format_array.append('Right Border')
 
         #Fill
         if xf.background.background_colour_index != 65:
@@ -130,19 +139,30 @@ class SheetCompressor:
                 dictionary[i['Value']].append(i['Address'])
             else:
                 dictionary[i['Value']] = [i['Address']]
+        dictionary = {k: v for k, v in dictionary.items() if not pd.isna(k)}
+        return dictionary
+    
+    def inverted_category(self, markdown):
+        dictionary = {}
+        for _, i in markdown.iterrows():
+                dictionary[i['Value']] = i['Category']
         return dictionary
     
     #Regex to NFS
     def category(self, string):
         if pd.isna(string):
             return 'Other'
+        if isinstance(string, float):
+            return 'Float'
+        if isinstance(string, int):
+            return 'Integer'
         if re.match('^(\+|-)?\d+$', string) or re.match('^\d{1,3}(,\d{1,3})*$', string): #Steven Smith
             return 'Integer'
         if re.match('^[-+]?\d*\.?\d*$', string) or re.match('^\d{1,3}(,\d{3})*(\.\d+)?$', string): #Steven Smith/Stack Overflow (https://stackoverflow.com/questions/5917082/regular-expression-to-match-numbers-with-or-without-commas-and-decimals-in-text)
             return 'Float'
         if re.match('^[-+]?\d*\.?\d*%$', string) or re.match('^\d{1,3}(,\d{3})*(\.\d+)?%$', string):
             return 'Percentage'
-        if re.match('^[-+]?[$]\d*\.?\d{2}$', string) or re.match('^\d{1,3}(,\d{3})*(\.\d{2})?$', string): #Michael Ash
+        if re.match('^[-+]?[$]\d*\.?\d{2}$', string) or re.match('^[-+]?[$]\d{1,3}(,\d{3})*(\.\d{2})?$', string): #Michael Ash
             return 'Currency'
         if re.match('\b-?[1-9](?:\.\d+)?[Ee][-+]?\d+\b', string): #Michael Ash
             return 'Scientific Notation'
@@ -152,21 +172,30 @@ class SheetCompressor:
             return datetime
         return 'Other'
     
-    def identical_cell_aggregation(sheet, dictionary):
+    def identical_cell_aggregation(self, sheet, dictionary):
+
+        def replace_nan(sheet):
+            if pd.isna(sheet):
+                return 'Other'
+            else:
+                return dictionary[sheet]
+            
         m = len(sheet)
         n = len(sheet.columns)
 
-        visited = [[False] * n] * m
+        visited = [[False] * n for _ in range(m)]
         areas = []
-        FormatDict = {} #Needs to be data value -> category pairs
-
         def dfs(r, c, val_type):
-            if visited[r][c] or val_type != FormatDict[sheet[r, c]]:
+            match = replace_nan(sheet.iloc[r, c])
+            if visited[r][c] or val_type != match:
                 return [r, c, r - 1, c - 1]
             visited[r][c] = True
             bounds = [r, c, r, c]
-            for i in [[r - 1, c], [r, c - 1], [r + 1, c], [c, r + 1]]:
-                if not visited[i] and val_type == FormatDict[sheet[i]]:
+            for i in [[r - 1, c], [r, c - 1], [r + 1, c], [r, c + 1]]:
+                if (i[0] < 0) or (i[1] < 0) or (i[0] >= len(sheet)) or (i[1] >= len(sheet.columns)):
+                    continue
+                match = replace_nan(sheet.iloc[i[0], i[1]])
+                if not visited[i[0]][i[1]] and val_type == match: 
                     new_bounds = dfs(i[0], i[1], val_type)
                     bounds = [min(new_bounds[0], bounds[0]), min(new_bounds[1], bounds[1]), max(new_bounds[2], bounds[2]), max(new_bounds[3], bounds[3])]
             return bounds
@@ -174,8 +203,23 @@ class SheetCompressor:
         for r in range(m):
             for c in range(n):
                 if not visited[r][c]:
-                    val_type = FormatDict[sheet[r, c]]
+                    val_type = replace_nan(sheet.iloc[r, c])
                     bounds = dfs(r, c, val_type)
-                    areas += [(bounds[0], bounds[1]), (bounds[2], bounds[3]), val_type]
-
+                    areas.append([(bounds[0], bounds[1]), (bounds[2], bounds[3]), val_type])
         return areas
+    
+    def write_areas(self, file, areas):
+        string = ''
+        for i in areas:
+            string += ('(' + i[2] + '|' + self.parse_colindex(i[0][1] + 1) + str(i[0][0]) + ':' 
+                       + self.parse_colindex(i[1][1] + 1) + str(i[1][0]) + '), ')
+        with open(file, 'w+', encoding="utf-8") as f:
+            f.writelines(string)
+
+    def write_dict(self, file, dict):
+        string = ''
+        for key, value in dict.items():
+            for i in value:
+                string += (i + ',' + str(key) + '|')
+        with open(file, 'w+', encoding="utf-8") as f:
+            f.writelines(string)

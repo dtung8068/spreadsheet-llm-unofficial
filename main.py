@@ -6,11 +6,10 @@ from SheetCompressor import SheetCompressor
 
 DIRECTORY = 'VFUSE'   
 
-sheet_compressor = SheetCompressor()
-
 def main():
     for root, dirs, files in os.walk(DIRECTORY):
         for file in files:
+            sheet_compressor = SheetCompressor()
             if file == 'readme.txt':
                 continue
             try:
@@ -20,17 +19,26 @@ def main():
             sheet = pd.read_excel(wb, engine='xlrd')
             sheet = sheet.apply(lambda x: x.str.replace('\n', '<br>') if x.dtype == 'object' else x)
 
-            sheet = sheet_compressor.anchor(sheet) #3.2
-            markdown = sheet_compressor.encode(wb, sheet) #3.1
+            #Structural-anchor-based Extraction
+            sheet = sheet_compressor.anchor(sheet)
 
-            markdown['Category'] = markdown['Value'].apply(lambda x: sheet_compressor.category(x)) #Get categories (part of 3.4)
+            #Encoding 
+            markdown = sheet_compressor.encode(wb, sheet) #Paper encodes first then anchors; I chose to do this in reverse
 
-            dictionary = sheet_compressor.inverted_index(markdown) #3.3
+            #Data-Format Aggregation
+            markdown['Category'] = markdown['Value'].apply(lambda x: sheet_compressor.category(x))
+            category_dict = sheet_compressor.inverted_category(markdown) 
+            try:
+                areas = sheet_compressor.identical_cell_aggregation(sheet, category_dict)
+            except RecursionError:
+                continue
 
-            print(dictionary)
+            #Inverted-index Translation
+            compress_dict = sheet_compressor.inverted_index(markdown)
 
-            #Write the dictionary
-            
+            #Write to files
+            sheet_compressor.write_areas('output/' + file.split('.')[0] + '_areas.txt', areas)
+            sheet_compressor.write_dict('output/' + file.split('.')[0] + '_dict.txt', compress_dict)
 
 if __name__ == "__main__":
     main()
