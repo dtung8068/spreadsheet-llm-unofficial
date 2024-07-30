@@ -1,3 +1,4 @@
+import datetime
 import numpy as np
 import pandas as pd
 import re
@@ -62,7 +63,7 @@ class SheetCompressor:
         markdown = pd.DataFrame(columns = ['Address', 'Value', 'Format'])
         for rowindex, i in sheet.iterrows():
             for colindex, j in enumerate(sheet.columns.tolist()):
-                new_row = pd.DataFrame([self.parse_colindex(colindex + 1) + str(rowindex + 2), i[j],
+                new_row = pd.DataFrame([self.parse_colindex(colindex + 1) + str(rowindex + 1), i[j],
                                         self.get_format(wb.xf_list[wb.sheet_by_index(0).cell(rowindex, colindex).xf_index], wb)]).T
                 new_row.columns = markdown.columns
                 markdown = pd.concat([markdown, new_row])
@@ -86,7 +87,8 @@ class SheetCompressor:
     #Checks for length of text across row/column, looks for outliers, marks as candidates
     def get_length_row(self, sheet):
         for i, j in sheet.iterrows():
-            self.row_lengths[i] = sum(j.apply(lambda x: 0 if isinstance(x, float) or isinstance(x, int) else len(x)))
+            self.row_lengths[i] = sum(j.apply(lambda x: 0 if isinstance(x, float) or isinstance(x, int)
+                                              or isinstance(x, datetime.datetime) else len(x)))
         mean = np.mean(list(self.row_lengths.values()))
         std = np.std(list(self.row_lengths.values()))
         min = np.max(mean - 2 * std, 0)
@@ -95,7 +97,8 @@ class SheetCompressor:
 
     def get_length_column(self, sheet):
         for i, j in enumerate(sheet.columns):
-            self.column_lengths[i] = sum(sheet[j].apply(lambda x: 0 if isinstance(x, float) or isinstance(x, int) else len(x)))
+            self.column_lengths[i] = sum(sheet[j].apply(lambda x: 0 if isinstance(x, float) or isinstance(x, int)
+                                                        or isinstance(x, datetime.datetime) else len(x)))
         mean = np.mean(list(self.column_lengths.values()))
         std = np.std(list(self.column_lengths.values()))
         min = np.max(mean - 2 * std, 0)
@@ -156,6 +159,8 @@ class SheetCompressor:
             return 'Float'
         if isinstance(string, int):
             return 'Integer'
+        if isinstance(string, datetime.datetime):
+            return 'yyyy/mm/dd'
         if re.match('^(\+|-)?\d+$', string) or re.match('^\d{1,3}(,\d{1,3})*$', string): #Steven Smith
             return 'Integer'
         if re.match('^[-+]?\d*\.?\d*$', string) or re.match('^\d{1,3}(,\d{3})*(\.\d+)?$', string): #Steven Smith/Stack Overflow (https://stackoverflow.com/questions/5917082/regular-expression-to-match-numbers-with-or-without-commas-and-decimals-in-text)
@@ -168,8 +173,8 @@ class SheetCompressor:
             return 'Scientific Notation'
         if re.match("^((([!#$%&'*+\-/=?^_`{|}~\w])|([!#$%&'*+\-/=?^_`{|}~\w][!#$%&'*+\-/=?^_`{|}~\.\w]{0,}[!#$%&'*+\-/=?^_`{|}~\w]))[@]\w+([-.]\w+)*\.\w+([-.]\w+)*)$", string): #Dave Black RFC 2821
             return 'Email'
-        if datetime := guess_datetime_format(string):
-            return datetime
+        if datetime_format := guess_datetime_format(string):
+            return datetime_format
         return 'Other'
     
     def identical_cell_aggregation(self, sheet, dictionary):
