@@ -132,6 +132,11 @@ class SheetCompressor:
         self.column_candidates = self.column_candidates[(self.column_candidates >= 0) & (self.column_candidates < len(sheet.columns))]
 
         sheet = sheet.iloc[self.row_candidates, self.column_candidates]
+
+        #Remap coordinates
+        sheet = sheet.reset_index().drop(columns = 'index')
+        sheet.columns = list(range(len(sheet.columns)))
+
         return sheet
     
     #Converts markdown to value-key pair
