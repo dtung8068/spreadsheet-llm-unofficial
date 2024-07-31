@@ -18,7 +18,12 @@ def main():
                 return 
             sheet = pd.read_excel(wb, engine='xlrd')
             sheet = sheet.apply(lambda x: x.str.replace('\n', '<br>') if x.dtype == 'object' else x)
-            sheet = sheet.T.reset_index().T.reset_index().drop(columns = 'index')
+
+            #Move columns to row 1
+            sheet.loc[-1] = sheet.columns
+            sheet.index += 1
+            sheet.sort_index(inplace=True)
+            sheet.columns = list(range(len(sheet.columns)))
 
             #Structural-anchor-based Extraction
             sheet = sheet_compressor.anchor(sheet)
