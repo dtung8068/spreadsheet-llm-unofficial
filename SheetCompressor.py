@@ -229,7 +229,6 @@ class SheetCompressor:
     def write_dict(self, file, dict):
         string = ''
         for key, value in dict.items():
-            for i in value:
-                string += (i + ',' + str(key) + '|')
+            string += (str(value) + ',' + str(key) + '|')
         with open(file, 'w+', encoding="utf-8") as f:
             f.writelines(string)
