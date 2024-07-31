@@ -141,6 +141,19 @@ class SheetCompressor:
     
     #Converts markdown to value-key pair
     def inverted_index(self, markdown):
+
+        #Takes array of Excel cells and combines adjacent cells
+        def combine_cells(array):
+            
+            # Correct version
+            # 2d version of summary ranges from leetcode
+            # For each row, run summary ranges to get a 1d array, then run summary ranges for each column 
+
+            # Greedy version
+            if len(array) == 1:
+                return array[0]
+            return array[0] + ':' + array[-1]
+        
         dictionary = {}
         for _, i in markdown.iterrows():
             if i['Value'] in dictionary:
@@ -148,6 +161,7 @@ class SheetCompressor:
             else:
                 dictionary[i['Value']] = [i['Address']]
         dictionary = {k: v for k, v in dictionary.items() if not pd.isna(k)}
+        dictionary = {k: combine_cells(v) for k, v in dictionary.items()}
         return dictionary
     
     def inverted_category(self, markdown):
@@ -184,6 +198,7 @@ class SheetCompressor:
     
     def identical_cell_aggregation(self, sheet, dictionary):
 
+        #Handles nan edge cases
         def replace_nan(sheet):
             if pd.isna(sheet):
                 return 'Other'
