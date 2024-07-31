@@ -7,8 +7,7 @@ You will need Python 3.8+, pandas, numpy, and xlrd. You will also need to downlo
 
 # Limitations
 1. Only text was considered for the structural anchor-based extraction, formatting (border, color, etc.) was not considered
-2. No coordinate remapping
-3. NFS Identification currently relies on regular expressions and may not be robust
+2. NFS Identification currently relies on regular expressions and may not be robust
 
 # Future Plans
 1. Implementing the LLM Portion of the paper
