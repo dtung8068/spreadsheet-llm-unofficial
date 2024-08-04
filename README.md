@@ -3,7 +3,11 @@
  This project has only implemented the SheetCompressor portion so far.
 
 # Requirements
-You will need Python 3.8+, pandas, numpy, and xlrd. You will also need to download the VFUSE dataset from TableSense, found here: https://figshare.com/projects/Versioned_Spreadsheet_Corpora/20116  
+You will need Python 3.8+, Pandas 2.2+, NumPy, and xlrd. 
+
+You will also need to download the VFUSE dataset from TableSense, found here: https://figshare.com/projects/Versioned_Spreadsheet_Corpora/20116  
+
+You will need to set up an OPENAI_API_KEY in your Environment Variables
 
 # Limitations
 1. Only text was considered for the structural anchor-based extraction, formatting (border, color, etc.) was not considered
