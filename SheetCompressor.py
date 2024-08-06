@@ -236,8 +236,8 @@ class SheetCompressor:
     def write_areas(self, file, areas):
         string = ''
         for i in areas:
-            string += ('(' + i[2] + '|' + self.parse_colindex(i[0][1] + 1) + str(i[0][0]) + ':' 
-                       + self.parse_colindex(i[1][1] + 1) + str(i[1][0]) + '), ')
+            string += ('(' + i[2] + '|' + self.parse_colindex(i[0][1] + 1) + str(i[0][0] + 1) + ':' 
+                       + self.parse_colindex(i[1][1] + 1) + str(i[1][0] + 1) + '), ')
         with open(file, 'w+', encoding="utf-8") as f:
             f.writelines(string)
 
