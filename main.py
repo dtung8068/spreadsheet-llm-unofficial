@@ -7,7 +7,11 @@ from openai import OpenAI
 from SheetCompressor import SheetCompressor
 from SpreadsheetLLM import SpreadsheetLLM
 
-DIRECTORY = 'VFUSE'   
+DIRECTORY = 'VFUSE'
+#client = OpenAI()
+
+original_size = 0
+new_size = 0
 
 def compress_spreadsheet(file):
     sheet_compressor = SheetCompressor()
@@ -47,10 +51,20 @@ def compress_spreadsheet(file):
     sheet_compressor.write_areas('output/' + file.split('.')[0] + '_areas.txt', areas)
     sheet_compressor.write_dict('output/' + file.split('.')[0] + '_dict.txt', compress_dict)
 
+    #Update original/new size
+    global original_size
+    global new_size
+    original_size += os.path.getsize(os.path.join(root, file))
+    new_size += os.path.getsize('output/' + file.split('.')[0] + '_areas.txt')
+    new_size += os.path.getsize('output/' + file.split('.')[0] + '_dict.txt')
+
 def llm(model):
     spreadsheet_llm = SpreadsheetLLM(model)
 
 if __name__ == "__main__":
+
     for root, dirs, files in os.walk(DIRECTORY):
         for file in files:
             compress_spreadsheet(file)
+    print('Compression Ratio: {}'.format(str(original_size / new_size)))
+    
