@@ -1,6 +1,6 @@
-from openai import OpenAI
 
-STAGE_1_PROMPT = """INSTRUCTION:
+#If you only want to check how many tables
+PROMPT_TABLE = """INSTRUCTION:
 Given an input that is a string denoting data of cells in a table.
 The input table contains many tuples, describing the cells with content in the spreadsheet.
 Each tuple consists of two elements separated by a '|': the cell content and the cell address/region, like (Year|A1), ( |A1) or (IntNum|A1:B3).
@@ -10,12 +10,18 @@ For example, 'IntNum' represents integer type data, and 'ScientificNum' represen
 'A1:B3' represents a region in a spreadsheet, from the first row to the third row and from column A to column B.
 Some cells with empty content in the spreadsheet are not entered.
 How many tables are there in the spreadsheet?
+DON'T ADD OTHER WORDS OR EXPLANATION.
+INPUT: """
+
+#Part 1 of CoS
+STAGE_1_PROMPT = """INSTRUCTION:
 Below is a question about one certain table in this spreadsheet.
 I need you to determine in which table the answer to the following question can be found, and return the RANGE of the ONE table you choose, LIKE ['range':'A1:F9'].
 DON'T ADD OTHER WORDS OR EXPLANATION.
 INPUT: """
 
-STAGE_2_PROMPT = """
+#Part 2 of CoS (after filtering out table)
+STAGE_2_PROMPT = """INSTRUCTION:
 Given an input that is a string denoting data of cells in a table and a question about this table.
 The answer to the question can be found in the table.
 The input table includes many pairs, and each pair consists of a cell address and the text in that cell with a ',' in between, like 'A1,Year'.
@@ -25,23 +31,30 @@ The cells are organized in row-major order.
 The answer to the input question is contained in the input table and can be represented by cell address.
 I need you to find the cell address of the answer in the given table based on the given question description, and return the cell ADDRESS of the answer like '[B3]' or '[SUM(A2:A10)]'.
 DON'T ADD ANY OTHER WORDS."
-INPUT: 
-"""
+INPUT: """
 
-def identify_table(table):
-    pass
+class SpreadsheetLLM():
+    def __init__(self, client, model):
+        self.client = client
+        self.model = model
+    
+    def call(self, prompt):
+        completion = self.client.chat.completions.create(
+          model=self.model,
+          messages=[
+            {"role": "user", "content": prompt}
+          ]
+        )
+        return completion.choices[0].message
+    
+    def identify_table(self, table):
+        PROMPT_TABLE += table
+        return self.call(PROMPT_TABLE)
+        #Feed to LLM
 
-def question_answer(table):
-    pass
-
-client = OpenAI()
-
-completion = client.chat.completions.create(
-  model="gpt-4o-mini",
-  messages=[
-    {"role": "system", "content": "You are a poetic assistant, skilled in explaining complex programming concepts with creative flair."},
-    {"role": "user", "content": "Compose a poem that explains the concept of recursion in programming."}
-  ]
-)
-
-print(completion.choices[0].message)
+    def question_answer(self, table):
+        STAGE_1_PROMPT += table
+        table_range = self.call(STAGE_1_PROMPT)
+        STAGE_2_PROMPT += table_range
+        return self.call(STAGE_2_PROMPT)
+        #Feed to LLM
