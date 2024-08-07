@@ -8,11 +8,12 @@ from SheetCompressor import SheetCompressor
 from SpreadsheetLLM import SpreadsheetLLM
 
 DIRECTORY = 'VFUSE'
-#client = OpenAI()
+model = 'mistral' #Options: 'gpt-3.5', 'gpt-4', 'mistral', 'llama-2', 'llama-3', 'phi3'
 
 original_size = 0
 new_size = 0
 
+#Takes a file, compresses it, and writes to output folder
 def compress_spreadsheet(file):
     sheet_compressor = SheetCompressor()
     if file == 'readme.txt':
@@ -37,7 +38,7 @@ def compress_spreadsheet(file):
     markdown = sheet_compressor.encode(wb, sheet) #Paper encodes first then anchors; I chose to do this in reverse
 
     #Data-Format Aggregation
-    markdown['Category'] = markdown['Value'].apply(lambda x: sheet_compressor.category(x))
+    markdown['Category'] = markdown['Value'].apply(lambda x: sheet_compressor.get_category(x))
     category_dict = sheet_compressor.inverted_category(markdown) 
     try:
         areas = sheet_compressor.identical_cell_aggregation(sheet, category_dict)
@@ -67,4 +68,5 @@ if __name__ == "__main__":
         for file in files:
             compress_spreadsheet(file)
     print('Compression Ratio: {}'.format(str(original_size / new_size)))
+    llm(model)
     

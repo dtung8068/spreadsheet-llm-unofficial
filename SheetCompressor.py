@@ -16,18 +16,19 @@ class SheetCompressor:
         self.row_lengths = {}
         self.column_lengths = {}
 
-    #Modified divmod function for Excel; courtesy of https://stackoverflow.com/questions/48983939/convert-a-number-to-excel-s-base-26
-    def divmod_excel(self, n):
-        a, b = divmod(n, 26)
-        if b == 0:
-            return a - 1, b + 26
-        return a, b
-
     #Converts index to column letter; courtesy of https://stackoverflow.com/questions/48983939/convert-a-number-to-excel-s-base-26
     def parse_colindex(self, num):
+        
+        #Modified divmod function for Excel; courtesy of https://stackoverflow.com/questions/48983939/convert-a-number-to-excel-s-base-26
+        def divmod_excel(self, n):
+            a, b = divmod(n, 26)
+            if b == 0:
+                return a - 1, b + 26
+            return a, b
+        
         chars = []
         while num > 0:
-            num, d = self.divmod_excel(num)
+            num, d = divmod_excel(num)
             chars.append(string.ascii_uppercase[d - 1])
         return ''.join(reversed(chars))
 
@@ -104,12 +105,13 @@ class SheetCompressor:
         min = np.max(mean - 2 * std, 0)
         max = mean + 2 * std
         self.column_lengths = dict((k, v) for k, v in self.column_lengths.items() if v < min or v > max)
-    
-    #Given num, obtain all integers from num - k to num + k inclusive
-    def surrounding_k(self, num, k):
-        return list(range(num - k, num + k + 1))
 
     def anchor(self, sheet):
+        
+        #Given num, obtain all integers from num - k to num + k inclusive
+        def surrounding_k(num, k):
+            return list(range(num - k, num + k + 1))
+        
         self.get_dtype_row(sheet)
         self.get_dtype_column(sheet)
         self.get_length_row(sheet)
@@ -124,8 +126,8 @@ class SheetCompressor:
         self.column_candidates = np.append(self.column_candidates, [0, len(sheet.columns) - 1]).astype('int32')
 
         #Get K closest rows/columns to each candidate
-        self.row_candidates = np.unique(list(np.concatenate([self.surrounding_k(i, K) for i in self.row_candidates]).flat))
-        self.column_candidates = np.unique(list(np.concatenate([self.surrounding_k(i, K) for i in self.column_candidates]).flat))
+        self.row_candidates = np.unique(list(np.concatenate([surrounding_k(i, K) for i in self.row_candidates]).flat))
+        self.column_candidates = np.unique(list(np.concatenate([surrounding_k(i, K) for i in self.column_candidates]).flat))
 
         #Truncate negative/out of bounds
         self.row_candidates = self.row_candidates[(self.row_candidates >= 0) & (self.row_candidates < len(sheet))]
@@ -164,6 +166,7 @@ class SheetCompressor:
         dictionary = {k: combine_cells(v) for k, v in dictionary.items()}
         return dictionary
     
+    #Key-Value to Value-Key for categories
     def inverted_category(self, markdown):
         dictionary = {}
         for _, i in markdown.iterrows():
@@ -171,7 +174,7 @@ class SheetCompressor:
         return dictionary
     
     #Regex to NFS
-    def category(self, string):
+    def get_category(self, string):
         if pd.isna(string):
             return 'Other'
         if isinstance(string, float):
@@ -204,12 +207,8 @@ class SheetCompressor:
                 return 'Other'
             else:
                 return dictionary[sheet]
-            
-        m = len(sheet)
-        n = len(sheet.columns)
 
-        visited = [[False] * n for _ in range(m)]
-        areas = []
+        #DFS for checking bounds
         def dfs(r, c, val_type):
             match = replace_nan(sheet.iloc[r, c])
             if visited[r][c] or val_type != match:
@@ -224,6 +223,12 @@ class SheetCompressor:
                     new_bounds = dfs(i[0], i[1], val_type)
                     bounds = [min(new_bounds[0], bounds[0]), min(new_bounds[1], bounds[1]), max(new_bounds[2], bounds[2]), max(new_bounds[3], bounds[3])]
             return bounds
+
+        m = len(sheet)
+        n = len(sheet.columns)
+
+        visited = [[False] * n for _ in range(m)]
+        areas = []
 
         for r in range(m):
             for c in range(n):
