@@ -20,7 +20,7 @@ class SheetCompressor:
     def parse_colindex(self, num):
         
         #Modified divmod function for Excel; courtesy of https://stackoverflow.com/questions/48983939/convert-a-number-to-excel-s-base-26
-        def divmod_excel(self, n):
+        def divmod_excel(n):
             a, b = divmod(n, 26)
             if b == 0:
                 return a - 1, b + 26

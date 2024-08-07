@@ -7,8 +7,12 @@ from openai import OpenAI
 from SheetCompressor import SheetCompressor
 from SpreadsheetLLM import SpreadsheetLLM
 
+COMPRESS_VFUSE = False
 DIRECTORY = 'VFUSE'
-model = 'mistral' #Options: 'gpt-3.5', 'gpt-4', 'mistral', 'llama-2', 'llama-3', 'phi3'
+FILE_NAME = '7b5a0a10-e241-4c0d-a896-11c7c9bf2040'
+MODEL_NAME = 'mistral' #Options: 'gpt-3.5', 'gpt-4', 'mistral', 'llama-2', 'llama-3', 'phi-3'
+QUESTION = ''
+TASK = 'ID' #ID (Table Identification), or QA (Question Answer) or both
 
 original_size = 0
 new_size = 0
@@ -59,14 +63,26 @@ def compress_spreadsheet(file):
     new_size += os.path.getsize('output/' + file.split('.')[0] + '_areas.txt')
     new_size += os.path.getsize('output/' + file.split('.')[0] + '_dict.txt')
 
-def llm(model):
+def llm(model, filename):
     spreadsheet_llm = SpreadsheetLLM(model)
+    
+    with open('output/' + filename + '_areas.txt') as f:
+        area = f.readlines()
+    with open('output/' + filename + '_dict.txt') as f:
+        table = f.readlines()
+    if TASK == 'ID':
+        print(spreadsheet_llm.identify_table(area))
+    elif TASK == 'QA':
+        print(spreadsheet_llm.question_answer(table, QUESTION))
+    else:
+        print(spreadsheet_llm.identify_table(area))
+        print(spreadsheet_llm.question_answer(table, QUESTION))
 
 if __name__ == "__main__":
-
-    for root, dirs, files in os.walk(DIRECTORY):
-        for file in files:
-            compress_spreadsheet(file)
+    if COMPRESS_VFUSE:
+        for root, dirs, files in os.walk(DIRECTORY):
+            for file in files:
+                compress_spreadsheet(file)
     print('Compression Ratio: {}'.format(str(original_size / new_size)))
-    llm(model)
+    llm(MODEL_NAME, FILE_NAME, TASK, QUESTION)
     

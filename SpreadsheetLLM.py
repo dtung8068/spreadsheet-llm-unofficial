@@ -1,3 +1,5 @@
+from openai import OpenAI
+import transformers
 
 #If you only want to check how many tables
 PROMPT_TABLE = """INSTRUCTION:
@@ -33,28 +35,45 @@ I need you to find the cell address of the answer in the given table based on th
 DON'T ADD ANY OTHER WORDS."
 INPUT: """
 
+MODEL_DICT = {'mistral': 'mistralai/Mistral-7B-Instruct-v0.2',
+              'llama-2': 'meta-llama/Llama-2-7b-chat-hf',
+              'llama-3': 'meta-llama/Meta-Llama-3-8B-Instruct',
+              'phi-3': 'microsoft/Phi-3-mini-128k-instruct',
+              'gpt-3.5': 'gpt-3.5-turbo',
+              'gpt-4': 'gpt-4'}
+
 class SpreadsheetLLM():
-    def __init__(self, client, model):
-        self.client = client
+    def __init__(self, model):
         self.model = model
     
     def call(self, prompt):
-        completion = self.client.chat.completions.create(
-          model=self.model,
-          messages=[
-            {"role": "user", "content": prompt}
-          ]
-        )
-        return completion.choices[0].message
+        if self.model == 'gpt-3.5' or self.model == 'gpt-4': #OpenAI API
+          completion = OpenAI().chat.completions.create(
+            model=MODEL_DICT[self.model],
+            messages=[
+              {"role": "user", "content": prompt}
+            ]
+          )
+          return completion.choices[0].message
+        else: #Transformers
+            pipeline = transformers.pipeline(
+                "text-generation",
+                model = MODEL_DICT[self.model],
+                device_map="auto"
+            )
+            messages = [
+                {"role": "user", "content": prompt}
+            ]
+            return pipeline(messages)[0]['generated_text']
     
     def identify_table(self, table):
-        PROMPT_TABLE += table
-        return self.call(PROMPT_TABLE)
+        global PROMPT_TABLE
+        return self.call(PROMPT_TABLE + str(table))
         #Feed to LLM
 
     def question_answer(self, table):
-        STAGE_1_PROMPT += table
-        table_range = self.call(STAGE_1_PROMPT)
-        STAGE_2_PROMPT += table_range
-        return self.call(STAGE_2_PROMPT)
+        global STAGE_1_PROMPT
+        global STAGE_2_PROMPT
+        table_range = self.call(STAGE_1_PROMPT + str(table))
+        return self.call(STAGE_2_PROMPT + str(table_range))
         #Feed to LLM
