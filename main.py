@@ -1,18 +1,17 @@
 import os
 import pandas as pd
+import streamlit as st
 import xlrd
-
-from openai import OpenAI
 
 from SheetCompressor import SheetCompressor
 from SpreadsheetLLM import SpreadsheetLLM
 
-COMPRESS_VFUSE = False
+COMPRESS_DIRECTORY = False
 DIRECTORY = 'VFUSE'
 FILE_NAME = '7b5a0a10-e241-4c0d-a896-11c7c9bf2040'
-MODEL_NAME = 'mistral' #Options: 'gpt-3.5', 'gpt-4', 'mistral', 'llama-2', 'llama-3', 'phi-3'
+MODEL_NAME = 'mistral' 
+TASK = 'ID'
 QUESTION = ''
-TASK = 'ID' #ID (Table Identification), or QA (Question Answer) or both
 
 original_size = 0
 new_size = 0
@@ -78,11 +77,12 @@ def llm(model, filename):
         print(spreadsheet_llm.identify_table(area))
         print(spreadsheet_llm.question_answer(table, QUESTION))
 
-if __name__ == "__main__":
-    if COMPRESS_VFUSE:
+"""if __name__ == "__main__":
+    
+    if COMPRESS_DIRECTORY:
         for root, dirs, files in os.walk(DIRECTORY):
             for file in files:
                 compress_spreadsheet(file)
     print('Compression Ratio: {}'.format(str(original_size / new_size)))
     llm(MODEL_NAME, FILE_NAME, TASK, QUESTION)
-    
+"""

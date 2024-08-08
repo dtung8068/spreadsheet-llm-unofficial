@@ -1,5 +1,7 @@
-from openai import OpenAI
+import os
 import transformers
+
+from openai import OpenAI
 
 #If you only want to check how many tables
 PROMPT_TABLE = """INSTRUCTION:
@@ -48,9 +50,10 @@ class SpreadsheetLLM():
     
     def call(self, prompt):
         if self.model == 'gpt-3.5' or self.model == 'gpt-4': #OpenAI API
-          completion = OpenAI().chat.completions.create(
+          completion = OpenAI(api_key=os.environ['OPENAI_API_KEY']).chat.completions.create(
             model=MODEL_DICT[self.model],
             messages=[
+                
               {"role": "user", "content": prompt}
             ]
           )
@@ -71,9 +74,9 @@ class SpreadsheetLLM():
         return self.call(PROMPT_TABLE + str(table))
         #Feed to LLM
 
-    def question_answer(self, table):
+    def question_answer(self, table, question):
         global STAGE_1_PROMPT
         global STAGE_2_PROMPT
         table_range = self.call(STAGE_1_PROMPT + str(table))
-        return self.call(STAGE_2_PROMPT + str(table_range))
+        return self.call(STAGE_2_PROMPT + str(question + table_range))
         #Feed to LLM
