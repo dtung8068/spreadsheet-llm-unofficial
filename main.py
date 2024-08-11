@@ -77,12 +77,10 @@ def llm(model, filename):
         print(spreadsheet_llm.identify_table(area))
         print(spreadsheet_llm.question_answer(table, QUESTION))
 
-"""if __name__ == "__main__":
-    
+if __name__ == "__main__":
     if COMPRESS_DIRECTORY:
         for root, dirs, files in os.walk(DIRECTORY):
             for file in files:
                 compress_spreadsheet(file)
-    print('Compression Ratio: {}'.format(str(original_size / new_size)))
-    llm(MODEL_NAME, FILE_NAME, TASK, QUESTION)
-"""
+        print('Compression Ratio: {}'.format(str(original_size / new_size)))
+    llm(MODEL_NAME, FILE_NAME)

@@ -53,7 +53,6 @@ class SpreadsheetLLM():
           completion = OpenAI(api_key=os.environ['OPENAI_API_KEY']).chat.completions.create(
             model=MODEL_DICT[self.model],
             messages=[
-                
               {"role": "user", "content": prompt}
             ]
           )
@@ -77,6 +76,7 @@ class SpreadsheetLLM():
     def question_answer(self, table, question):
         global STAGE_1_PROMPT
         global STAGE_2_PROMPT
-        table_range = self.call(STAGE_1_PROMPT + str(table))
-        return self.call(STAGE_2_PROMPT + str(question + table_range))
+
+        table_range = self.call(STAGE_1_PROMPT + str(table) + '\n QUESTION:' + question)
+        return self.call(STAGE_2_PROMPT + str(question + table_range + '\n QUESTION:' + question))
         #Feed to LLM
