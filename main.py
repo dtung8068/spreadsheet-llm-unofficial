@@ -1,6 +1,7 @@
 import argparse
 import os
 import pandas as pd
+import string
 import xlrd
 
 from SheetCompressor import SheetCompressor
@@ -44,16 +45,7 @@ def compress_spreadsheet(file):
     #Inverted-index Translation
     compress_dict = sheet_compressor.inverted_index(markdown)
 
-    #Write to files
-    sheet_compressor.write_areas('output/' + file.split('.')[0] + '_areas.txt', areas)
-    sheet_compressor.write_dict('output/' + file.split('.')[0] + '_dict.txt', compress_dict)
-
-    #Update original/new size
-    global original_size
-    global new_size
-    original_size += os.path.getsize(os.path.join(root, file))
-    new_size += os.path.getsize('output/' + file.split('.')[0] + '_areas.txt')
-    new_size += os.path.getsize('output/' + file.split('.')[0] + '_dict.txt')
+    return areas, compress_dict
 
 def llm(model, filename):
     spreadsheet_llm = SpreadsheetLLM(model)
@@ -66,6 +58,37 @@ def llm(model, filename):
         print(spreadsheet_llm.identify_table(area))
     if args.question:
         print(spreadsheet_llm.question_answer(table, args.question))
+
+#Converts index to column letter; courtesy of https://stackoverflow.com/questions/48983939/convert-a-number-to-excel-s-base-26
+def parse_colindex(num):
+    
+    #Modified divmod function for Excel; courtesy of https://stackoverflow.com/questions/48983939/convert-a-number-to-excel-s-base-26
+    def divmod_excel(n):
+        a, b = divmod(n, 26)
+        if b == 0:
+            return a - 1, b + 26
+        return a, b
+    
+    chars = []
+    while num > 0:
+        num, d = divmod_excel(num)
+        chars.append(string.ascii_uppercase[d - 1])
+    return ''.join(reversed(chars))
+    
+def write_areas(file, areas):
+    string = ''
+    for i in areas:
+        string += ('(' + i[2] + '|' + parse_colindex(i[0][1] + 1) + str(i[0][0] + 1) + ':' 
+                    + parse_colindex(i[1][1] + 1) + str(i[1][0] + 1) + '), ')
+    with open(file, 'w+', encoding="utf-8") as f:
+        f.writelines(string)
+
+def write_dict(file, dict):
+    string = ''
+    for key, value in dict.items():
+        string += (str(value) + ',' + str(key) + '|')
+    with open(file, 'w+', encoding="utf-8") as f:
+        f.writelines(string)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -80,6 +103,14 @@ if __name__ == "__main__":
     if args.compress:
         for root, dirs, files in os.walk(args.directory):
             for file in files:
-                compress_spreadsheet(file)
+                try:
+                    areas, compress_dict = compress_spreadsheet(file)
+                except TypeError:
+                    continue
+                write_areas('output/' + file.split('.')[0] + '_areas.txt', areas)
+                write_dict('output/' + file.split('.')[0] + '_dict.txt', compress_dict)
+                original_size += os.path.getsize(os.path.join(root, file))
+                new_size += os.path.getsize('output/' + file.split('.')[0] + '_areas.txt')
+                new_size += os.path.getsize('output/' + file.split('.')[0] + '_dict.txt')
         print('Compression Ratio: {}'.format(str(original_size / new_size)))
     llm(args.model, args.file)

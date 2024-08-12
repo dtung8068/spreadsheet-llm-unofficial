@@ -237,18 +237,3 @@ class SheetCompressor:
                     bounds = dfs(r, c, val_type)
                     areas.append([(bounds[0], bounds[1]), (bounds[2], bounds[3]), val_type])
         return areas
-    
-    def write_areas(self, file, areas):
-        string = ''
-        for i in areas:
-            string += ('(' + i[2] + '|' + self.parse_colindex(i[0][1] + 1) + str(i[0][0] + 1) + ':' 
-                       + self.parse_colindex(i[1][1] + 1) + str(i[1][0] + 1) + '), ')
-        with open(file, 'w+', encoding="utf-8") as f:
-            f.writelines(string)
-
-    def write_dict(self, file, dict):
-        string = ''
-        for key, value in dict.items():
-            string += (str(value) + ',' + str(key) + '|')
-        with open(file, 'w+', encoding="utf-8") as f:
-            f.writelines(string)
