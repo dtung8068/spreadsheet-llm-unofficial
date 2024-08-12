@@ -62,12 +62,9 @@ def llm(model, filename):
         area = f.readlines()
     with open('output/' + filename + '_dict.txt') as f:
         table = f.readlines()
-    if args.task == 'ID':
+    if args.table:
         print(spreadsheet_llm.identify_table(area))
-    elif args.task == 'QA':
-        print(spreadsheet_llm.question_answer(table, args.question))
-    else:
-        print(spreadsheet_llm.identify_table(area))
+    if args.question:
         print(spreadsheet_llm.question_answer(table, args.question))
 
 if __name__ == "__main__":
@@ -76,8 +73,8 @@ if __name__ == "__main__":
     parser.add_argument('--directory', type=str, default='VFUSE', help='directory of excel files')
     parser.add_argument('--file', type=str, default='7b5a0a10-e241-4c0d-a896-11c7c9bf2040', help='file to work with')
     parser.add_argument('--model', type=str, choices={'gpt-3.5', 'gpt-4', 'mistral', 'llama-2', 'llama-3', 'phi-3'}, default='gpt-4', help='llm to use')
-    parser.add_argument('--task', type=str, choices={'', 'ID', 'QA'}, default='', required=False, help='ID = table identification, QA = question/answer, otherwise both')
-    parser.add_argument('--question', type=str, required=False, help='question to ask llm assuming task is QA')
+    parser.add_argument('--table', action=argparse.BooleanOptionalAction, default=True, help='Whether or not to identify number of tables')
+    parser.add_argument('--question', type=str, help='question to ask llm')
     args = parser.parse_args()
 
     if args.compress:
