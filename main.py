@@ -1,17 +1,10 @@
+import argparse
 import os
 import pandas as pd
-import streamlit as st
 import xlrd
 
 from SheetCompressor import SheetCompressor
 from SpreadsheetLLM import SpreadsheetLLM
-
-COMPRESS_DIRECTORY = False
-DIRECTORY = 'VFUSE'
-FILE_NAME = '7b5a0a10-e241-4c0d-a896-11c7c9bf2040'
-MODEL_NAME = 'mistral' 
-TASK = 'ID'
-QUESTION = ''
 
 original_size = 0
 new_size = 0
@@ -69,18 +62,27 @@ def llm(model, filename):
         area = f.readlines()
     with open('output/' + filename + '_dict.txt') as f:
         table = f.readlines()
-    if TASK == 'ID':
+    if args.task == 'ID':
         print(spreadsheet_llm.identify_table(area))
-    elif TASK == 'QA':
-        print(spreadsheet_llm.question_answer(table, QUESTION))
+    elif args.task == 'QA':
+        print(spreadsheet_llm.question_answer(table, args.question))
     else:
         print(spreadsheet_llm.identify_table(area))
-        print(spreadsheet_llm.question_answer(table, QUESTION))
+        print(spreadsheet_llm.question_answer(table, args.question))
 
 if __name__ == "__main__":
-    if COMPRESS_DIRECTORY:
-        for root, dirs, files in os.walk(DIRECTORY):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--compress', action=argparse.BooleanOptionalAction, default=True, help="compress dataset into txt files; must run for LLM to work")
+    parser.add_argument('--directory', type=str, default='VFUSE', help='directory of excel files')
+    parser.add_argument('--file', type=str, default='7b5a0a10-e241-4c0d-a896-11c7c9bf2040', help='file to work with')
+    parser.add_argument('--model', type=str, choices={'gpt-3.5', 'gpt-4', 'mistral', 'llama-2', 'llama-3', 'phi-3'}, default='gpt-4', help='llm to use')
+    parser.add_argument('--task', type=str, choices={'', 'ID', 'QA'}, default='', required=False, help='ID = table identification, QA = question/answer, otherwise both')
+    parser.add_argument('--question', type=str, required=False, help='question to ask llm assuming task is QA')
+    args = parser.parse_args()
+
+    if args.compress:
+        for root, dirs, files in os.walk(args.directory):
             for file in files:
                 compress_spreadsheet(file)
         print('Compression Ratio: {}'.format(str(original_size / new_size)))
-    llm(MODEL_NAME, FILE_NAME)
+    llm(args.model, args.file)
