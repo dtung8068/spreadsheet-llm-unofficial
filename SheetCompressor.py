@@ -5,6 +5,8 @@ import re
 import string
 from pandas.tseries.api import guess_datetime_format
 
+from IndexColumnConverter import IndexColumnConverter
+
 CATEGORIES = ['Integer', 'Float', 'Percentage', 'Scientific Notation', 'Date',
               'Time', 'Currency', 'Email', 'Other']
 K = 4
@@ -15,22 +17,6 @@ class SheetCompressor:
         self.column_candidates = []
         self.row_lengths = {}
         self.column_lengths = {}
-
-    #Converts index to column letter; courtesy of https://stackoverflow.com/questions/48983939/convert-a-number-to-excel-s-base-26
-    def parse_colindex(self, num):
-        
-        #Modified divmod function for Excel; courtesy of https://stackoverflow.com/questions/48983939/convert-a-number-to-excel-s-base-26
-        def divmod_excel(n):
-            a, b = divmod(n, 26)
-            if b == 0:
-                return a - 1, b + 26
-            return a, b
-        
-        chars = []
-        while num > 0:
-            num, d = divmod_excel(num)
-            chars.append(string.ascii_uppercase[d - 1])
-        return ''.join(reversed(chars))
 
     #Obtain border, fill, bold info about cell; incomplete
     def get_format(self, xf, wb):
@@ -61,10 +47,11 @@ class SheetCompressor:
 
     #Encode spreadsheet into markdown format
     def encode(self, wb, sheet):
+        converter = IndexColumnConverter()
         markdown = pd.DataFrame(columns = ['Address', 'Value', 'Format'])
         for rowindex, i in sheet.iterrows():
             for colindex, j in enumerate(sheet.columns.tolist()):
-                new_row = pd.DataFrame([self.parse_colindex(colindex + 1) + str(rowindex + 1), i[j],
+                new_row = pd.DataFrame([converter.parse_colindex(colindex + 1) + str(rowindex + 1), i[j],
                                         self.get_format(wb.xf_list[wb.sheet_by_index(0).cell(rowindex, colindex).xf_index], wb)]).T
                 new_row.columns = markdown.columns
                 markdown = pd.concat([markdown, new_row])
