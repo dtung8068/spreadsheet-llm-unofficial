@@ -3,9 +3,9 @@ import os
 import pandas as pd
 import xlrd
 
+from IndexColumnConverter import IndexColumnConverter
 from SheetCompressor import SheetCompressor
 from SpreadsheetLLM import SpreadsheetLLM
-from IndexColumnConverter import IndexColumnConverter
 
 original_size = 0
 new_size = 0
@@ -15,15 +15,18 @@ class SpreadsheetLLMWrapper:
     def __init__(self):
         return
 
-    #Takes a file, compresses it
-    def compress_spreadsheet(self, root, file):
-        sheet_compressor = SheetCompressor()
-        if file == 'readme.txt':
+    def read_spreadsheet(self, file):
+        if file.split('.')[-1] != 'xls':
             return
         try:
-            wb = xlrd.open_workbook(os.path.join(root, file), logfile=open(os.devnull,'w'), formatting_info=True)
+            wb = xlrd.open_workbook(file, logfile=open(os.devnull,'w'), formatting_info=True)
+            return wb
         except xlrd.biffh.XLRDError:
             return 
+
+    #Takes a file, compresses it
+    def compress_spreadsheet(self, wb):
+        sheet_compressor = SheetCompressor()
         sheet = pd.read_excel(wb, engine='xlrd')
         sheet = sheet.apply(lambda x: x.str.replace('\n', '<br>') if x.dtype == 'object' else x)
 
@@ -92,8 +95,10 @@ if __name__ == "__main__":
     if args.compress:
         for root, dirs, files in os.walk(args.directory):
             for file in files:
+                if not (wb := wrapper.read_spreadsheet(os.path.join(root, file))):
+                    continue
                 try:
-                    areas, compress_dict = wrapper.compress_spreadsheet(root, file)
+                    areas, compress_dict = wrapper.compress_spreadsheet(wb)
                 except TypeError:
                     continue
                 wrapper.write_areas('output/' + file.split('.')[0] + '_areas.txt', areas)
