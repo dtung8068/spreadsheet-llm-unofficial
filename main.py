@@ -1,7 +1,6 @@
 import argparse
 import os
 import pandas as pd
-import string
 import xlrd
 
 from SheetCompressor import SheetCompressor
@@ -17,7 +16,7 @@ class SpreadsheetLLMWrapper:
         return
 
     #Takes a file, compresses it
-    def compress_spreadsheet(self, file):
+    def compress_spreadsheet(self, root, file):
         sheet_compressor = SheetCompressor()
         if file == 'readme.txt':
             return
@@ -53,17 +52,14 @@ class SpreadsheetLLMWrapper:
 
         return areas, compress_dict
 
-    def llm(self, model, filename):
-        spreadsheet_llm = SpreadsheetLLM(model)
-        
-        with open('output/' + filename + '_areas.txt') as f:
-            area = f.readlines()
-        with open('output/' + filename + '_dict.txt') as f:
-            table = f.readlines()
+    def llm(self, args, area, table):
+        spreadsheet_llm = SpreadsheetLLM(args.model)
+        output = ''
         if args.table:
-            print(spreadsheet_llm.identify_table(area))
+            output += spreadsheet_llm.identify_table(area) + '\n'
         if args.question:
-            print(spreadsheet_llm.question_answer(table, args.question))
+            output += spreadsheet_llm.question_answer(table, args.question)
+        return output
         
     def write_areas(self, file, areas):
         string = ''
@@ -86,7 +82,7 @@ if __name__ == "__main__":
     parser.add_argument('--compress', action=argparse.BooleanOptionalAction, default=True, help="compress dataset into txt files; must run for LLM to work")
     parser.add_argument('--directory', type=str, default='VFUSE', help='directory of excel files')
     parser.add_argument('--file', type=str, default='7b5a0a10-e241-4c0d-a896-11c7c9bf2040', help='file to work with')
-    parser.add_argument('--model', type=str, choices={'gpt-3.5', 'gpt-4', 'mistral', 'llama-2', 'llama-3', 'phi-3'}, default='gpt-4', help='llm to use')
+    parser.add_argument('--model', type=str, choices={'gpt-3.5', 'gpt-4', 'mistral', 'llama-2', 'llama-3', 'phi-3'}, default='gpt-3.5', help='llm to use')
     parser.add_argument('--table', action=argparse.BooleanOptionalAction, default=True, help='Whether or not to identify number of tables')
     parser.add_argument('--question', type=str, help='question to ask llm')
     args = parser.parse_args()
@@ -97,7 +93,7 @@ if __name__ == "__main__":
         for root, dirs, files in os.walk(args.directory):
             for file in files:
                 try:
-                    areas, compress_dict = wrapper.compress_spreadsheet(file)
+                    areas, compress_dict = wrapper.compress_spreadsheet(root, file)
                 except TypeError:
                     continue
                 wrapper.write_areas('output/' + file.split('.')[0] + '_areas.txt', areas)
@@ -105,5 +101,10 @@ if __name__ == "__main__":
                 original_size += os.path.getsize(os.path.join(root, file))
                 new_size += os.path.getsize('output/' + file.split('.')[0] + '_areas.txt')
                 new_size += os.path.getsize('output/' + file.split('.')[0] + '_dict.txt')
-        print('Compression Ratio: {}'.format(str(original_size / new_size)))
-    wrapper.llm(args.model, args.file)
+        print('Compression Ratio: {}'.format(str(original_size / new_size)))   
+
+    with open('output/' + args.file + '_areas.txt') as f:
+        area = f.readlines()
+    with open('output/' + args.file + '_dict.txt') as f:
+        table = f.readlines()
+    print(wrapper.llm(args, area, table))

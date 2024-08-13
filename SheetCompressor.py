@@ -2,7 +2,6 @@ import datetime
 import numpy as np
 import pandas as pd
 import re
-import string
 from pandas.tseries.api import guess_datetime_format
 
 from IndexColumnConverter import IndexColumnConverter
