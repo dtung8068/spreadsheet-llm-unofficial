@@ -82,7 +82,7 @@ class SpreadsheetLLMWrapper:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--compress', action=argparse.BooleanOptionalAction, default=True, help="compress dataset into txt files; must run for LLM to work")
+    parser.add_argument('--compress', action=argparse.BooleanOptionalAction, default=False, help="compress dataset into txt files; must run for LLM to work")
     parser.add_argument('--directory', type=str, default='VFUSE', help='directory of excel files')
     parser.add_argument('--file', type=str, default='7b5a0a10-e241-4c0d-a896-11c7c9bf2040', help='file to work with')
     parser.add_argument('--model', type=str, choices={'gpt-3.5', 'gpt-4', 'mistral', 'llama-2', 'llama-3', 'phi-3'}, default='gpt-3.5', help='llm to use')

@@ -1,6 +1,7 @@
 import os
 import transformers
 
+from huggingface_hub import login
 from openai import OpenAI
 
 #If you only want to check how many tables
@@ -58,10 +59,12 @@ class SpreadsheetLLM():
           )
           return completion.choices[0].message
         else: #Transformers
+            login(token=os.environ['HUGGING_FACE_KEY'], add_to_git_credential=True)
             pipeline = transformers.pipeline(
                 "text-generation",
                 model = MODEL_DICT[self.model],
-                device_map="auto"
+                device_map="auto",
+                max_new_tokens=512
             )
             messages = [
                 {"role": "user", "content": prompt}
@@ -71,7 +74,6 @@ class SpreadsheetLLM():
     def identify_table(self, table):
         global PROMPT_TABLE
         return self.call(PROMPT_TABLE + str(table))
-        #Feed to LLM
 
     def question_answer(self, table, question):
         global STAGE_1_PROMPT
@@ -79,4 +81,3 @@ class SpreadsheetLLM():
 
         table_range = self.call(STAGE_1_PROMPT + str(table) + '\n QUESTION:' + question)
         return self.call(STAGE_2_PROMPT + str(question + table_range + '\n QUESTION:' + question))
-        #Feed to LLM
