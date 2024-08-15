@@ -10,12 +10,33 @@ class Arguments:
         self.table = table
         self.question = question
 
-args = Arguments(None, False, None)
+#Create temporary file to pull from
+def process_sheet(wrapper):
+    with NamedTemporaryFile(dir='.', suffix='.xls', delete=False) as f:
+        f.write(file.getbuffer())
+        wb = wrapper.read_spreadsheet(f.name)
+        areas, compress_dict = wrapper.compress_spreadsheet(wb)   
+    os.remove(f.name)  
+    return areas, compress_dict
+
+def identify_table(wrapper):
+    if file:
+        args.table = True
+        areas, compress_dict = process_sheet(wrapper)
+        output = wrapper.llm(args, areas, compress_dict)
+        st.session_state.messages.append({"role": "assistant", "content": output})
+        #st.chat_message("assistant").write(output)
+        args.table = False
+
+args = Arguments('gpt-3.5', False, None)
+wrapper = SpreadsheetLLMWrapper()
 
 with st.sidebar:
     file = st.file_uploader("Upload Spreadsheet", type='xls')
     model_name = st.selectbox("Model", ('gpt-3.5', 'gpt-4', 'mistral', 'llama-2', 'llama-3', 'phi-3'))
-    task = st.checkbox('Identify Number of Tables')
+    #task = st.checkbox('Identify Number of Tables')
+    if st.button('Identify Number of Tables'):
+        identify_table(wrapper)
 
 st.title("💬 Spreadsheet Chat")
 st.caption("🚀 Chatbot for SpreadsheetLLM")
@@ -36,15 +57,7 @@ if prompt := st.chat_input():
         st.session_state.messages.append({"role": "assistant", "content": "Please upload an Excel file first"})
         st.chat_message("assistant").write("Please upload an Excel file first")
     else:
-        wrapper = SpreadsheetLLMWrapper()
-        #Create temporary file to pull from
-        with NamedTemporaryFile(dir='.', suffix='.xls', delete=False) as f:
-            f.write(file.getbuffer())
-            wb = wrapper.read_spreadsheet(f.name)
-            areas, compress_dict = wrapper.compress_spreadsheet(wb)   
-        os.remove(f.name)  
-        if task:
-            args.table = True
+        areas, compress_dict = process_sheet(wrapper)
         output = wrapper.llm(args, areas, compress_dict)
         st.session_state.messages.append({"role": "assistant", "content": output})
         st.chat_message("assistant").write(output)
