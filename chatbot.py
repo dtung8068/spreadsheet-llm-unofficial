@@ -19,9 +19,10 @@ def process_sheet(wrapper):
     os.remove(f.name)  
     return areas, compress_dict
 
-def identify_table(wrapper):
+def identify_table(wrapper, model_name):
     if file:
         args.table = True
+        args.model = model_name
         areas, compress_dict = process_sheet(wrapper)
         output = wrapper.llm(args, areas, compress_dict)
         st.session_state.messages.append({"role": "assistant", "content": output})
@@ -36,7 +37,7 @@ with st.sidebar:
     model_name = st.selectbox("Model", ('gpt-3.5', 'gpt-4', 'mistral', 'llama-2', 'llama-3', 'phi-3'))
     #task = st.checkbox('Identify Number of Tables')
     if st.button('Identify Number of Tables'):
-        identify_table(wrapper)
+        identify_table(wrapper, model_name)
 
 st.title("💬 Spreadsheet Chat")
 st.caption("🚀 Chatbot for SpreadsheetLLM")
