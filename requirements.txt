@@ -1,1 +1,4 @@
 xlrd
+transformers
+huggingface_hub
+openai
