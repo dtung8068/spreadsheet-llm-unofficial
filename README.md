@@ -1,3 +1,5 @@
+![image](https://github.com/user-attachments/assets/e27b1d6f-a11b-43ad-aa74-3d428d53ff01)
+
 # SpreadsheetLLM
  My unofficial implementation of Microsoft's SpreadsheetLLM paper, found here: https://arxiv.org/pdf/2407.09025.
 
