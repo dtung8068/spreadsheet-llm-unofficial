@@ -39,7 +39,7 @@ with st.sidebar:
     if st.button('Identify Number of Tables'):
         identify_table(wrapper, model_name)
 
-st.title("💬 Spreadsheet Chat")
+st.title("💬 SpreadsheetGPT")
 st.caption("🚀 Chatbot for SpreadsheetLLM")
 if "messages" not in st.session_state:
     st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
