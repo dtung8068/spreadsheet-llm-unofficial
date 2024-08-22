@@ -26,7 +26,6 @@ def identify_table(wrapper, model_name):
         areas, compress_dict = process_sheet(wrapper)
         output = wrapper.llm(args, areas, compress_dict)
         st.session_state.messages.append({"role": "assistant", "content": output})
-        #st.chat_message("assistant").write(output)
         args.table = False
 
 args = Arguments('gpt-3.5', False, None)
@@ -35,8 +34,8 @@ wrapper = SpreadsheetLLMWrapper()
 with st.sidebar:
     file = st.file_uploader("Upload Spreadsheet", type='xls')
     model_name = st.selectbox("Model", ('gpt-3.5', 'gpt-4', 'mistral', 'llama-2', 'llama-3', 'phi-3'))
-    #task = st.checkbox('Identify Number of Tables')
     if st.button('Identify Number of Tables'):
+        st.session_state.messages.append({"role": "user", "content": "Identify Number of Tables"})
         identify_table(wrapper, model_name)
 
 st.title("💬 SpreadsheetGPT")
