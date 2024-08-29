@@ -57,7 +57,7 @@ class SpreadsheetLLM():
               {"role": "user", "content": prompt}
             ]
           )
-          return completion.choices[0].message
+          return completion.choices[0].message.content
         else: #Transformers
             login(token=os.environ['HUGGING_FACE_KEY'], add_to_git_credential=True)
             pipeline = transformers.pipeline(
