@@ -1,7 +1,7 @@
 import os
 import transformers
 
-from huggingface_hub import login
+from huggingface_hub import InferenceClient
 from openai import OpenAI
 
 #If you only want to check how many tables
@@ -58,18 +58,19 @@ class SpreadsheetLLM():
             ]
           )
           return completion.choices[0].message.content
-        else: #Transformers
-            login(token=os.environ['HUGGING_FACE_KEY'], add_to_git_credential=True)
-            pipeline = transformers.pipeline(
-                "text-generation",
-                model = MODEL_DICT[self.model],
-                device_map="auto",
-                max_new_tokens=512
+        else: #Transformers InferenceClient
+            output = ''
+            client = InferenceClient(
+              MODEL_DICT[self.model],
+              token=os.environ['HUGGING_FACE_KEY'],
             )
-            messages = [
-                {"role": "user", "content": prompt}
-            ]
-            return pipeline(messages)[0]['generated_text']
+            for message in client.chat_completion(
+	            messages=[{"role": "user", "content": prompt}],
+	            max_tokens=500,
+	            stream=True,
+            ):
+                output += message.choices[0].delta.content
+            return output
     
     def identify_table(self, table):
         global PROMPT_TABLE
