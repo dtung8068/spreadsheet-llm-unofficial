@@ -21,5 +21,6 @@ To run the chatbot, run `streamlit run chatbot.py`.
 3. Only .xls files will work at this time
 
 # Future Plans
-1. Running tests on the LLM
-2. Enabling compatibility with other Excel formats (.xlsx, .xlsm, etc.)
+1. Containerizing code
+2. Running tests on the LLM
+3. Enabling compatibility with other Excel formats
