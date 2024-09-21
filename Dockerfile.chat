@@ -1,0 +1,15 @@
+FROM python:3.12
+ARG OPENAI_API_KEY
+ARG HUGGING_FACE_KEY
+ENV OPENAI_API_KEY, $OPENAI_API_KEY
+ENV HUGGING_FACE_KEY, $HUGGING_FACE_KEY
+ADD main.py .
+ADD IndexColumnConverter.py .
+ADD SheetCompressor.py .
+ADD SpreadsheetLLM.py .
+ADD VFUSE VFUSE/
+ADD requirements.txt .
+RUN mkdir output
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+ENTRYPOINT ["python", "./chatbot.py"]

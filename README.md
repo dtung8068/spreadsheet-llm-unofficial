@@ -4,7 +4,7 @@
  My unofficial implementation of Microsoft's SpreadsheetLLM paper, found here: https://arxiv.org/pdf/2407.09025.
 
 # Requirements
-You will need Python 3.8+, Pandas 2.2+, NumPy, xlrd, transformers, huggingface_hub, and openai. 
+All requirements are listed in requirements.txt. I have attached two Dockerfiles, one for the command line utility and one for the chatbot. 
 
 You will also need to download the VFUSE dataset from TableSense, found here: https://figshare.com/projects/Versioned_Spreadsheet_Corpora/20116  
 
