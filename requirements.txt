@@ -4,3 +4,4 @@ xlrd
 transformers
 huggingface_hub
 openai
+streamlit
